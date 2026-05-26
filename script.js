@@ -50,6 +50,10 @@ const chooseO = document.getElementById('choose-o');
 const winnerOverlay = document.getElementById('winner-overlay');
 const winnerText = document.getElementById('winner-text');
 
+const scoreXElement = document.getElementById('score-x');
+const scoreOElement = document.getElementById('score-o');
+const scoreDrawElement = document.getElementById('score-draw');
+
 chooseX.addEventListener('click', () => {
 
     playerSymbol = 'X';
@@ -67,6 +71,15 @@ chooseO.addEventListener('click', () => {
 
     chooseX.classList.remove('active');
 });
+
+function updateScoreboard(data) {
+
+    scoreXElement.textContent = data?.scores?.X || 0;
+
+    scoreOElement.textContent = data?.scores?.O || 0;
+
+    scoreDrawElement.textContent = data?.scores?.draw || 0;
+}
 
 function renderBoard(element) {
 
@@ -213,6 +226,25 @@ async function makeMove(index) {
         nextStarter = 'X';
     }
 
+    const scores = data.scores || {
+
+        X:0,
+        O:0,
+        draw:0
+    };
+
+    if(result?.winner === 'X') {
+        scores.X++;
+    }
+
+    if(result?.winner === 'O') {
+        scores.O++;
+    }
+
+    if(result?.winner === 'VELHA') {
+        scores.draw++;
+    }
+
     await gameRef.update({
 
         board: newBoard,
@@ -225,7 +257,9 @@ async function makeMove(index) {
 
         winningLine: result?.line || [],
 
-        loserStarts: nextStarter
+        loserStarts: nextStarter,
+
+        scores: scores
     });
 }
 
@@ -256,6 +290,13 @@ async function createNewGame() {
         winningLine: [],
 
         loserStarts: playerSymbol === 'X' ? 'O' : 'X',
+
+        scores: {
+
+            X:0,
+            O:0,
+            draw:0
+        },
 
         players: {
 
@@ -295,6 +336,8 @@ function listenGame() {
         winningLine = data.winningLine || [];
 
         loserStarts = data.loserStarts || loserStarts;
+
+        updateScoreboard(data);
 
         renderBoard(boardDiv);
 
@@ -386,11 +429,11 @@ function shareGame() {
 
         navigator.share({
 
-            title: 'Jogo da Velha',
+            title:'Jogo da Velha',
 
-            text: 'Vamos jogar',
+            text:'Vamos jogar',
 
-            url: link
+            url:link
         });
     }
     else {
