@@ -1,4 +1,3 @@
-// --- Configuração do Firebase (será preenchida depois) ---
   const firebaseConfig = {
 
     apiKey: "AIzaSyDjyK1m44L76tvpRtV6KhEmHHumHxeNqy4",
@@ -19,18 +18,15 @@
 
 
 
-// Inicializa o Firebase
 firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
 
-// --- Variáveis Globais ---
-let currentGameId = null;      // ID da sala atual
-let playerSymbol = null;       // 'X' ou 'O' para o jogador atual
-let currentTurn = 'X';         // De quem é a vez ('X' começa)
-let gameActive = true;          // Se o jogo ainda está ativo
-let gameBoard = ['', '', '', '', '', '', '', '', '']; // Estado do tabuleiro
+let currentGameId = null;      
+let playerSymbol = null;     
+let currentTurn = 'X';         
+let gameActive = true;         
+let gameBoard = ['', '', '', '', '', '', '', '', '']; 
 
-// --- Elementos DOM ---
 const setupDiv = document.getElementById('game-setup');
 const gameAreaDiv = document.getElementById('game-area');
 const joinAreaDiv = document.getElementById('join-area');
@@ -42,7 +38,6 @@ const joinBoardDiv = document.getElementById('join-board');
 const gameStatusSpan = document.getElementById('game-status');
 const joinStatusSpan = document.getElementById('join-status');
 
-// --- Funções Auxiliares do Jogo ---
 function renderBoard(boardElement, isJoinBoard = false) {
     boardElement.innerHTML = '';
     for (let i = 0; i < 9; i++) {
@@ -60,9 +55,9 @@ function renderBoard(boardElement, isJoinBoard = false) {
 
 function checkWinner() {
     const winPatterns = [
-        [0, 1, 2], [3, 4, 5], [6, 7, 8], // Linhas
-        [0, 3, 6], [1, 4, 7], [2, 5, 8], // Colunas
-        [0, 4, 8], [2, 4, 6]             // Diagonais
+        [0, 1, 2], [3, 4, 5], [6, 7, 8], 
+        [0, 3, 6], [1, 4, 7], [2, 5, 8], 
+        [0, 4, 8], [2, 4, 6]            
     ];
     for (let pattern of winPatterns) {
         const [a, b, c] = pattern;
@@ -100,7 +95,6 @@ function updateGameStatus() {
 async function makeMove(index) {
     if (!gameActive || gameBoard[index] !== '' || currentTurn !== playerSymbol) return;
     
-    // Atualiza localmente
     gameBoard[index] = playerSymbol;
     renderBoard(boardDiv);
     renderBoard(joinBoardDiv, true);
@@ -114,7 +108,6 @@ async function makeMove(index) {
         winnerSymbol = winner;
     }
     
-    // Envia a jogada para o Firebase
     if (currentGameId) {
         await database.ref(`games/${currentGameId}`).update({
             board: gameBoard,
@@ -135,7 +128,6 @@ async function makeMove(index) {
     }
 }
 
-// --- Funções do Firebase e Multiplayer ---
 async function createNewGame() {
     const newGameRef = database.ref('games').push();
     currentGameId = newGameRef.key;
@@ -162,7 +154,6 @@ async function createNewGame() {
     renderBoard(boardDiv);
     updateGameStatus();
     
-    // Escuta as mudanças no Firebase
     listenToGameChanges();
 }
 
@@ -172,7 +163,6 @@ function listenToGameChanges() {
     gameRef.on('value', (snapshot) => {
         const data = snapshot.val();
         if (data) {
-            // Verifica se o segundo jogador entrou
             if (data.players.player2 && !playerSymbol) {
                 playerSymbol = 'O';
                 if (gameAreaDiv.style.display !== 'none') {
@@ -183,12 +173,10 @@ function listenToGameChanges() {
                 updateGameStatus();
             }
             
-            // Atualiza o estado do jogo
             if (data.board) gameBoard = data.board;
             if (data.currentTurn) currentTurn = data.currentTurn;
             if (data.gameActive !== undefined) gameActive = data.gameActive;
             
-            // Re-renderiza o tabuleiro correto
             if (playerSymbol === 'X') {
                 renderBoard(boardDiv);
                 renderBoard(joinBoardDiv, true);
@@ -235,7 +223,6 @@ function shareGameLink() {
     }
 }
 
-// --- Event Listeners e Inicialização ---
 createGameBtn.addEventListener('click', createNewGame);
 restartBtn.addEventListener('click', () => {
     if (currentGameId) {
@@ -245,7 +232,6 @@ restartBtn.addEventListener('click', () => {
 });
 shareBtn.addEventListener('click', shareGameLink);
 
-// Verifica se entrou com um link de convite (ex: ?room=123)
 const urlParams = new URLSearchParams(window.location.search);
 const roomId = urlParams.get('room');
 if (roomId) {
