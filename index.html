@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Jogo da Velha Online</title>
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Jogo da Velha 🎮</h1>
+        <div id="game-setup">
+            <button id="create-game">Criar Nova Partida</button>
+        </div>
+        <div id="game-area" style="display: none;">
+            <div id="game-status"></div>
+            <div class="board" id="board">
+
+            </div>
+            <button id="restart-game">Reiniciar Jogo</button>
+            <button id="share-game">Compartilhar Link do Jogo</button>
+        </div>
+        <div id="join-area" style="display: none;">
+            <p>Você entrou em uma partida!</p>
+            <div id="join-status"></div>
+            <div class="board" id="join-board">
+
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
