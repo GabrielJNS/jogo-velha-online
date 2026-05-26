@@ -18,34 +18,61 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 
+firebase.auth().signInAnonymously();
+
 const database = firebase.database();
 
 let currentGameId = null;
-let playerSymbol = null;
+let playerSymbol = 'X';
 let currentTurn = 'X';
-let gameActive = true;
 let gameBoard = ['', '', '', '', '', '', '', '', ''];
+let gameActive = true;
 let winningLine = [];
+let loserStarts = 'X';
 
-const setupDiv = document.getElementById('game-setup');
-const gameAreaDiv = document.getElementById('game-area');
-const joinAreaDiv = document.getElementById('join-area');
+const boardDiv = document.getElementById('board');
+const joinBoardDiv = document.getElementById('join-board');
 
 const createGameBtn = document.getElementById('create-game');
 const restartBtn = document.getElementById('restart-game');
 const shareBtn = document.getElementById('share-game');
 
-const boardDiv = document.getElementById('board');
-const joinBoardDiv = document.getElementById('join-board');
+const setupDiv = document.getElementById('game-setup');
+const gameAreaDiv = document.getElementById('game-area');
+const joinAreaDiv = document.getElementById('join-area');
 
-const gameStatusSpan = document.getElementById('game-status');
-const joinStatusSpan = document.getElementById('join-status');
+const gameStatus = document.getElementById('game-status');
+const joinStatus = document.getElementById('join-status');
 
-function renderBoard(boardElement) {
+const chooseX = document.getElementById('choose-x');
+const chooseO = document.getElementById('choose-o');
 
-    boardElement.innerHTML = '';
+const winnerOverlay = document.getElementById('winner-overlay');
+const winnerText = document.getElementById('winner-text');
 
-    for (let i = 0; i < 9; i++) {
+chooseX.addEventListener('click', () => {
+
+    playerSymbol = 'X';
+
+    chooseX.classList.add('active');
+
+    chooseO.classList.remove('active');
+});
+
+chooseO.addEventListener('click', () => {
+
+    playerSymbol = 'O';
+
+    chooseO.classList.add('active');
+
+    chooseX.classList.remove('active');
+});
+
+function renderBoard(element) {
+
+    element.innerHTML = '';
+
+    for(let i = 0; i < 9; i++) {
 
         const cell = document.createElement('div');
 
@@ -53,19 +80,19 @@ function renderBoard(boardElement) {
 
         cell.textContent = gameBoard[i];
 
-        if (gameBoard[i] === 'X') {
+        if(gameBoard[i] === 'X') {
             cell.classList.add('X');
         }
 
-        if (gameBoard[i] === 'O') {
+        if(gameBoard[i] === 'O') {
             cell.classList.add('O');
         }
 
-        if (winningLine.includes(i)) {
+        if(winningLine.includes(i)) {
             cell.classList.add('win');
         }
 
-        if (
+        if(
             gameActive &&
             gameBoard[i] === '' &&
             currentTurn === playerSymbol
@@ -73,7 +100,7 @@ function renderBoard(boardElement) {
             cell.addEventListener('click', () => makeMove(i));
         }
 
-        boardElement.appendChild(cell);
+        element.appendChild(cell);
     }
 }
 
@@ -90,11 +117,11 @@ function checkWinner(board) {
         [2,4,6]
     ];
 
-    for (const pattern of patterns) {
+    for(const pattern of patterns) {
 
         const [a,b,c] = pattern;
 
-        if (
+        if(
             board[a] &&
             board[a] === board[b] &&
             board[a] === board[c]
@@ -107,10 +134,10 @@ function checkWinner(board) {
         }
     }
 
-    if (!board.includes('')) {
+    if(!board.includes('')) {
 
         return {
-            winner: 'empate',
+            winner: 'VELHA',
             line: []
         };
     }
@@ -118,32 +145,45 @@ function checkWinner(board) {
     return null;
 }
 
-function updateGameStatus() {
+function updateStatus() {
 
     let text = '';
 
     const result = checkWinner(gameBoard);
 
-    if (result?.winner === 'X') {
-        text = '🎉 Jogador X venceu!';
+    if(result?.winner === 'X') {
+        text = 'X venceu';
     }
-    else if (result?.winner === 'O') {
-        text = '🎉 Jogador O venceu!';
+    else if(result?.winner === 'O') {
+        text = 'O venceu';
     }
-    else if (result?.winner === 'empate') {
-        text = '😲 Empate!';
+    else if(result?.winner === 'VELHA') {
+        text = 'Velha';
     }
     else {
-        text = `Vez do jogador ${currentTurn}`;
+        text = `Vez de ${currentTurn}`;
     }
 
-    gameStatusSpan.textContent = text;
-    joinStatusSpan.textContent = text;
+    gameStatus.textContent = text;
+    joinStatus.textContent = text;
+}
+
+function showWinner(text) {
+
+    winnerText.textContent = text;
+
+    winnerOverlay.classList.add('show');
+
+    setTimeout(() => {
+
+        winnerOverlay.classList.remove('show');
+
+    }, 2500);
 }
 
 async function makeMove(index) {
 
-    if (!gameActive) return;
+    if(!gameActive) return;
 
     const gameRef = database.ref(`games/${currentGameId}`);
 
@@ -151,11 +191,11 @@ async function makeMove(index) {
 
     const data = snapshot.val();
 
-    if (!data) return;
+    if(!data) return;
 
-    if (data.board[index] !== '') return;
+    if(data.board[index] !== '') return;
 
-    if (data.currentTurn !== playerSymbol) return;
+    if(data.currentTurn !== playerSymbol) return;
 
     const newBoard = [...data.board];
 
@@ -163,18 +203,29 @@ async function makeMove(index) {
 
     const result = checkWinner(newBoard);
 
+    let nextStarter = data.loserStarts || 'X';
+
+    if(result?.winner === 'X') {
+        nextStarter = 'O';
+    }
+
+    if(result?.winner === 'O') {
+        nextStarter = 'X';
+    }
+
     await gameRef.update({
 
         board: newBoard,
 
-        currentTurn: playerSymbol === 'X' ? 'O' : 'X',
+        currentTurn: result ? nextStarter : playerSymbol === 'X' ? 'O' : 'X',
 
         gameActive: result ? false : true,
 
         winner: result?.winner || null,
 
-        winningLine: result?.line || []
+        winningLine: result?.line || [],
 
+        loserStarts: nextStarter
     });
 }
 
@@ -184,15 +235,13 @@ async function createNewGame() {
 
     currentGameId = newGameRef.key;
 
-    playerSymbol = 'X';
-
-    currentTurn = 'X';
-
-    gameActive = true;
+    currentTurn = playerSymbol;
 
     gameBoard = ['', '', '', '', '', '', '', '', ''];
 
     winningLine = [];
+
+    gameActive = true;
 
     await newGameRef.set({
 
@@ -206,12 +255,13 @@ async function createNewGame() {
 
         winningLine: [],
 
+        loserStarts: playerSymbol === 'X' ? 'O' : 'X',
+
         players: {
 
-            player1: 'X',
+            X: playerSymbol === 'X',
 
-            player2: null
-
+            O: playerSymbol === 'O'
         }
     });
 
@@ -221,14 +271,12 @@ async function createNewGame() {
 
     renderBoard(boardDiv);
 
-    updateGameStatus();
+    updateStatus();
 
-    listenToGameChanges();
+    listenGame();
 }
 
-function listenToGameChanges() {
-
-    if (!currentGameId) return;
+function listenGame() {
 
     const gameRef = database.ref(`games/${currentGameId}`);
 
@@ -236,7 +284,7 @@ function listenToGameChanges() {
 
         const data = snapshot.val();
 
-        if (!data) return;
+        if(!data) return;
 
         gameBoard = data.board || gameBoard;
 
@@ -246,11 +294,25 @@ function listenToGameChanges() {
 
         winningLine = data.winningLine || [];
 
+        loserStarts = data.loserStarts || loserStarts;
+
         renderBoard(boardDiv);
 
         renderBoard(joinBoardDiv);
 
-        updateGameStatus();
+        updateStatus();
+
+        if(data.winner === 'X') {
+            showWinner('X venceu');
+        }
+
+        if(data.winner === 'O') {
+            showWinner('O venceu');
+        }
+
+        if(data.winner === 'VELHA') {
+            showWinner('Velha');
+        }
     });
 }
 
@@ -260,48 +322,78 @@ async function joinGame(gameId) {
 
     const snapshot = await gameRef.get();
 
-    const gameData = snapshot.val();
+    const data = snapshot.val();
 
-    if (!gameData) {
+    if(!data) {
 
         alert('Sala não encontrada');
 
         return;
     }
 
-    if (gameData.players.player2) {
+    if(data.players.X && data.players.O) {
 
         alert('Sala cheia');
 
         return;
     }
 
-    await gameRef.child('players/player2').set('O');
+    if(!data.players.X) {
+
+        playerSymbol = 'X';
+
+        await gameRef.child('players/X').set(true);
+    }
+    else {
+
+        playerSymbol = 'O';
+
+        await gameRef.child('players/O').set(true);
+    }
 
     currentGameId = gameId;
-
-    playerSymbol = 'O';
 
     setupDiv.style.display = 'none';
 
     joinAreaDiv.style.display = 'block';
 
-    listenToGameChanges();
+    listenGame();
 }
 
-function shareGameLink() {
+async function restartGame() {
+
+    const gameRef = database.ref(`games/${currentGameId}`);
+
+    await gameRef.update({
+
+        board: ['', '', '', '', '', '', '', '', ''],
+
+        currentTurn: loserStarts,
+
+        gameActive: true,
+
+        winner: null,
+
+        winningLine: []
+    });
+}
+
+function shareGame() {
 
     const link = `${window.location.origin}${window.location.pathname}?room=${currentGameId}`;
 
-    if (navigator.share) {
+    if(navigator.share) {
 
         navigator.share({
+
             title: 'Jogo da Velha',
-            text: 'Vem jogar comigo',
+
+            text: 'Vamos jogar',
+
             url: link
         });
-
-    } else {
+    }
+    else {
 
         prompt('Copie o link:', link);
     }
@@ -309,36 +401,15 @@ function shareGameLink() {
 
 createGameBtn.addEventListener('click', createNewGame);
 
-restartBtn.addEventListener('click', async () => {
+restartBtn.addEventListener('click', restartGame);
 
-    if (!currentGameId) return;
+shareBtn.addEventListener('click', shareGame);
 
-    await database.ref(`games/${currentGameId}`).update({
+const params = new URLSearchParams(window.location.search);
 
-        board: ['', '', '', '', '', '', '', '', ''],
+const roomId = params.get('room');
 
-        currentTurn: 'X',
-
-        gameActive: true,
-
-        winner: null,
-
-        winningLine: []
-
-    });
-});
-
-shareBtn.addEventListener('click', shareGameLink);
-
-const urlParams = new URLSearchParams(window.location.search);
-
-const roomId = urlParams.get('room');
-
-if (roomId) {
+if(roomId) {
 
     joinGame(roomId);
-
-} else {
-
-    setupDiv.style.display = 'block';
 }
