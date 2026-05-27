@@ -1,14 +1,13 @@
 const firebaseConfig = {
-
-    apiKey: "SUA_API_KEY",
-    authDomain: "SEU_AUTH_DOMAIN",
-    databaseURL: "SEU_DATABASE_URL",
-    projectId: "SEU_PROJECT_ID",
-    storageBucket: "SEU_BUCKET",
-    messagingSenderId: "SEU_SENDER_ID",
-    appId: "SEU_APP_ID"
-
+    apiKey: "AIzaSyDjyK1m44L76tvpRtV6KhEmHHumHxeNqy4",
+    authDomain: "meu-jogo-velha.firebaseapp.com",
+    databaseURL: "https://meu-jogo-velha-default-rtdb.firebaseio.com",
+    projectId: "meu-jogo-velha",
+    storageBucket: "meu-jogo-velha.firebasestorage.app",
+    messagingSenderId: "699322233191",
+    appId: "1:699322233191:web:cbf9ca5cc9153b2b2b7fc2"
 };
+
 
 firebase.initializeApp(firebaseConfig);
 
