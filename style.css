@@ -249,12 +249,30 @@ body{
 
 @media(max-width:700px){
 
+    body{
+        overflow:auto;
+        padding:15px;
+    }
+
+    .container{
+        padding:0;
+        align-items:flex-start;
+    }
+
     .card{
-        padding:20px;
+        padding:18px;
+        border-radius:25px;
+        margin-top:10px;
+        margin-bottom:20px;
     }
 
     .top-area h1{
-        font-size:2.5rem;
+        font-size:2rem;
+        line-height:1.1;
+    }
+
+    .top-area span{
+        font-size:0.85rem;
     }
 
     .players{
@@ -262,7 +280,17 @@ body{
     }
 
     .scoreboard{
-        flex-wrap:wrap;
+        display:grid;
+        grid-template-columns:1fr 1fr 1fr;
+        gap:10px;
+    }
+
+    .score{
+        padding:12px;
+    }
+
+    .score span{
+        font-size:1.4rem;
     }
 
     .player-box{
@@ -273,12 +301,42 @@ body{
         flex-direction:column;
     }
 
+    .player-box input,
+    .player-box button,
+    .room-box button,
+    .buttons button{
+        width:100%;
+        padding:14px;
+        font-size:0.95rem;
+    }
+
+    .room-info{
+        width:100%;
+        text-align:center;
+    }
+
+    #status{
+        padding:14px;
+        font-size:0.9rem;
+    }
+
+    .board{
+        gap:10px;
+        margin-top:20px;
+    }
+
     .cell{
-        font-size:3rem;
+        font-size:2.2rem;
+        border-radius:18px;
+    }
+
+    #winner-box{
+        width:90%;
+        padding:25px;
     }
 
     #winner-text{
-        font-size:2rem;
+        font-size:1.8rem;
     }
 
 }
